@@ -1,0 +1,50 @@
+{
+    "name": "dmitryrogolev/helper",
+    "description": "Helper for the Laravel framework.",
+    "version": "0.0.1",
+    "type": "library",
+    "keywords": [
+        "helper",
+        "laravel",
+        "laravel-helper"
+    ],
+    "homepage": "https://github.com/dmitry-rogolev/Helper",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dmitry Rogolev",
+            "email": "work.drogolev@internet.ru",
+            "homepage": "https://dmitryrogolev.ru",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "laravel/framework": "^10.30"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.15"
+    },
+    "autoload": {
+        "psr-4": {
+            "dmitryrogolev\\": "src/",
+            "dmitryrogolev\\Helper\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "dmitryrogolev\\Helper\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "dmitryrogolev\\Helper\\Providers\\HelperServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    }
+}
