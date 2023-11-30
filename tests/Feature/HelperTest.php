@@ -2,6 +2,8 @@
 
 namespace dmitryrogolev\Helper\Tests;
 
+use Illuminate\Support\Stringable;
+
 /**
  * Тестируем функции помощника.
  */
@@ -55,16 +57,58 @@ class HelperTest extends TestCase
         $object = obj($value, MyClass::class, 1, 2);
         $this->assertIsObject($object);
         $this->assertInstanceOf(MyClass::class, $object);
-        $this->assertEquals(1, $object->a);
-        $this->assertEquals(2, $object->b);
+        $this->assertEquals(1, $object->getA());
+        $this->assertEquals(2, $object->getB());
 
         // Передаем функции, возвращающие значение и параметры конструктора.
         $value  = fn () => 'MyClass';
         $object = obj($value, MyClass::class, fn () => 1, fn () => 2);
         $this->assertIsObject($object);
         $this->assertInstanceOf(MyClass::class, $object);
-        $this->assertEquals(1, $object->a);
-        $this->assertEquals(2, $object->b);
+        $this->assertEquals(1, $object->getA());
+        $this->assertEquals(2, $object->getB());
+    }
+
+    /**
+     * Есть ли функция, приводящая объект к массиву?
+     *
+     * @return void
+     */
+    public function test_object_to_array(): void
+    {
+        // Передаем объект обычного класса.
+        $object = new MyClass('public', 'protected', 'private');
+        $array  = object_to_array($object);
+        $this->assertEquals(['a' => 'public'], $array);
+
+        // Передаем объект класса, реализующий интерфейс "Illuminate\Contracts\Support\Arrayable".
+        $object = collect([1, 2, 3]);
+        $array  = object_to_array($object);
+        $this->assertEquals([1, 2, 3], $array);
+    }
+
+    /**
+     * Есть ли функция, рекурсивно приводящая объект и его публичные свойства к массиву?
+     *
+     * @return void
+     */
+    public function test_object_to_array_recursive(): void
+    {
+        // Передаем объект обычного класса.
+        $object = new MyClass('public', 'protected', 'private');
+        $array  = object_to_array_recursive($object);
+        $this->assertEquals(['a' => 'public'], $array);
+
+        // Передаем объект класса, реализующий интерфейс "Illuminate\Contracts\Support\Arrayable".
+        $object = collect([1, 2, 3]);
+        $array  = object_to_array_recursive($object);
+        $this->assertEquals([1, 2, 3], $array);
+
+        // Передаем объект, имеющий вложенные объекты.
+        $sub_object = new MyClass('public', 'protected', 'private');
+        $object     = new MyClass($sub_object, 'protected', 'private');
+        $array      = object_to_array_recursive($object);
+        $this->assertEquals(['a' => ['a' => 'public']], $array);
     }
 
     /**
@@ -122,7 +166,12 @@ class HelperTest extends TestCase
      */
     public function test_to_array(): void
     {
-        // Передаем значение, отличное от массива.
+        // Передаем объект.
+        $value  = new MyClass('public', 'protected', 'private');
+        $result = to_array($value);
+        $this->assertEquals(['a' => 'public'], $result);
+
+        // Передаем значение, отличное от массива и объекта.
         $value  = 'value';
         $result = to_array($value);
         $this->assertEquals(['value'], $result);
@@ -133,29 +182,14 @@ class HelperTest extends TestCase
         $this->assertEquals(['it', 'is', 'my', 'string'], $result);
 
         // Передаем массив.
-        $value  = ['it', ['is', 'my'], 'string'];
+        $value  = ['it', 'is', 'my', 'string'];
         $result = to_array($value);
         $this->assertEquals(['it', 'is', 'my', 'string'], $result);
-
-        // Передаем строку с разделителями.
-        $value  = 'it_is_my_string';
-        $result = to_array($value);
-        $this->assertEquals(['it', 'is', 'my', 'string'], $result);
-
-        // Передаем строку в стиле CamelCase.
-        $value  = 'ItIsMyString';
-        $result = to_array($value);
-        $this->assertEquals(['It', 'Is', 'My', 'String'], $result);
-
-        // Передаем коллекцию строк с разделителями.
-        $value  = collect(['it,is', [['my big', 'big-big'], 'big|big', 'big, big'], [['big_big'], 'BigBig', 'big.string']]);
-        $result = to_array($value);
-        $this->assertEquals(['it', 'is', 'my', 'big', 'big', 'big', 'big', 'big', 'big', 'big', 'big', 'big', 'Big', 'Big', 'big', 'string'], $result);
 
         // Передаем функцию.
-        $value  = fn () => 'It Is, My| String';
+        $value  = fn () => ['it', 'is', 'my', 'string'];
         $result = to_array($value);
-        $this->assertEquals(['It', 'Is', 'My', 'String'], $result);
+        $this->assertEquals(['it', 'is', 'my', 'string'], $result);
     }
 
     /**
@@ -165,7 +199,12 @@ class HelperTest extends TestCase
      */
     public function test_to_collect(): void
     {
-        // Передаем значение, отличное от массива.
+        // Передаем объект.
+        $value  = new MyClass('public', 'protected', 'private');
+        $result = to_collect($value)->toArray();
+        $this->assertEquals(['a' => 'public'], $result);
+
+        // Передаем значение, отличное от массива и объекта.
         $value  = 'value';
         $result = to_collect($value)->toArray();
         $this->assertEquals(['value'], $result);
@@ -180,25 +219,48 @@ class HelperTest extends TestCase
         $result = to_collect($value)->toArray();
         $this->assertEquals(['it', 'is', 'my', 'string'], $result);
 
-        // Передаем строку с разделителями.
-        $value  = 'it_is_my_string';
+        // Передаем функцию.
+        $value  = fn () => ['it', 'is', 'my', 'string'];
         $result = to_collect($value)->toArray();
         $this->assertEquals(['it', 'is', 'my', 'string'], $result);
+    }
 
-        // Передаем строку в стиле CamelCase.
-        $value  = 'ItIsMyString';
-        $result = to_collect($value)->toArray();
-        $this->assertEquals(['It', 'Is', 'My', 'String'], $result);
+    /**
+     * Если ли функция, приводящая значение к строке "Illuminate\Support\Stringable"?
+     *
+     * @return void
+     */
+    public function test_to_stringable(): void
+    {
+        // Передаем строку.
+        $value  = 'string';
+        $result = to_stringable($value);
+        $this->assertInstanceOf(Stringable::class, $result);
+        $this->assertEquals('string', $result->toString());
 
-        // Передаем коллекцию строк с разделителями.
-        $value  = collect(['it,is', [['my big', 'big-big'], 'big|big', 'big, big'], [['big_big'], 'BigBig', 'big.string']]);
-        $result = to_collect($value)->toArray();
-        $this->assertEquals(['it', 'is', 'my', 'big', 'big', 'big', 'big', 'big', 'big', 'big', 'big', 'big', 'Big', 'Big', 'big', 'string'], $result);
+        // Передаем "Illuminate\Support\Stringable".
+        $value  = str('string');
+        $result = to_stringable($value);
+        $this->assertInstanceOf(Stringable::class, $result);
+        $this->assertEquals('string', $result->toString());
 
-        // Передаем функцию.
-        $value  = fn () => 'It Is, My| String';
-        $result = to_collect($value)->toArray();
-        $this->assertEquals(['It', 'Is', 'My', 'String'], $result);
+        // Передаем объект, имеющий магический метод __toString
+        $value  = new MyClass('string');
+        $result = to_stringable($value);
+        $this->assertInstanceOf(Stringable::class, $result);
+        $this->assertEquals('string', $result->toString());
+
+        // Передаем объект, не имеющий магического метода __toString
+        $value  = new SomeClass();
+        $result = to_stringable($value);
+        $this->assertInstanceOf(Stringable::class, $result);
+        $this->assertEquals('', $result->toString());
+
+        // Передаем массив
+        $value  = ['string'];
+        $result = to_stringable($value);
+        $this->assertInstanceOf(Stringable::class, $result);
+        $this->assertEquals('', $result->toString());
     }
 }
 
@@ -206,12 +268,35 @@ class MyClass
 {
     public $a;
 
-    public $b;
+    protected $b;
 
-    public function __construct($a = null, $b = null)
+    private $c;
+
+    public function __construct($a = null, $b = null, $c = null)
     {
         $this->a = $a;
         $this->b = $b;
+        $this->c = $c;
+    }
+
+    public function getA()
+    {
+        return $this->a;
+    }
+
+    public function getB()
+    {
+        return $this->b;
+    }
+
+    public function getC()
+    {
+        return $this->c;
+    }
+
+    public function __toString(): string
+    {
+        return $this->a;
     }
 }
 

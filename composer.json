@@ -28,18 +28,14 @@
         "psr-4": {
             "dmitryrogolev\\": "src/",
             "dmitryrogolev\\Helper\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
             "dmitryrogolev\\Helper\\Tests\\": "tests/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "dmitryrogolev\\Helper\\Providers\\HelperServiceProvider"
-            ]
         }
     },
     "minimum-stability": "stable",

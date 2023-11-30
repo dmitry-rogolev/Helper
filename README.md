@@ -5,12 +5,10 @@
 ## Содержание
 
 - [Подключение](#подключение)
-- [Установка](#установка)
 - [Использование](#использование)
 
     + [Доступные помощники](#доступные-помощники)
 
-- [Конфигурация](#конфигурация)
 - [Лицензия](#лицензия)
 
 ## Подключение 
@@ -28,12 +26,6 @@
 
     composer require dmitryrogolev/helper
 
-## Установка 
-
-Опубликуйте файл конфигурации с помощью команды.
-
-    php artisan helper:install 
-
 ## Использование 
 
 Пакет предоставляет два вида помощников: 
@@ -43,12 +35,17 @@
 
 ### Доступные помощники
 
-- [obj](#obj-и-helperobj)
-- [split](#split-и-helpersplit)
-- [to_array](#to_array-и-helpertoarray)
-- [to_collect](#to_collect-и-helpertocollect)
+- [obj](#obj)
+- [object_to_array](#object_to_array)
+- [object_to_array_recursive](#object_to_array_recursive)
+- [split](#split)
+- [to_array](#to_array)
+- [to_collect](#to_collect)
+- [to_stringable](#to_stringable)
 
-#### `obj` и `Helper::obj`
+#### `obj` 
+
+`dmitryrogolev/Helper::obj`
 
 Возвращает объект требуемого класса.
 
@@ -70,7 +67,35 @@
     $value  = 'MyClass';
     $my_class = obj($value, MyClass::class, 1, 2, 'my_argument');
 
-#### `split` и `Helper::split`
+#### `object_to_array`
+
+`dmitryrogolev/Helper::objectToArray`
+
+Приводит переданный объект к массиву.
+
+Если передан объект, реализующий интерфейс `Illuminate\Contracts\Support\Arrayable`, будет вызван его метод `toArray`.
+
+    $object = collect([1, 2, 3]);
+    $array  = object_to_array($object); // [1, 2, 3]
+
+Если передать объект обычного класса, будут возвращены все его публичные свойства.
+
+    $object = new MyClass('public', 'protected', 'private');
+    $array  = object_to_array($object); // ['a' => 'public']
+
+#### `object_to_array_recursive`
+
+`dmitryrogolev/Helper::objectToArrayRecursive`
+
+Делает то же самое, что и помощник `object_to_array`, но дополнительно рекурсивно приводит к массиву все публичные свойства объекта.
+
+    $sub_object = new MyClass('public', 'protected', 'private');
+    $object     = new MyClass($sub_object, 'protected', 'private');
+    $array      = object_to_array_recursive($object); // ['a' => ['a' => 'public']]
+
+#### `split`
+
+`dmitryrogolev/Helper::split`
 
 Разбивает строку на коллекцию по регулярному выражению или по количеству символов в подстроке.
 
@@ -98,44 +123,49 @@
     $result = split($value, '/[\s]+/', 3)->toArray(); // Разбиваем по пробельным символам.
     // $result === ['It', 'is', 'my string.'];
 
-#### `to_array` и `Helper::toArray`
+#### `to_array`
 
-Приводит значение к массиву.
+`dmitryrogolev/Helper::toArray`
 
-Если передать значение, отличное от массива, то это значение будет обёрнуто в массив.
+Пытается привести входное значение к массиву.
+
+Объект будет приведен к массиву с помощью помощника `object_to_array`.
+
+    $value  = new MyClass('public', 'protected', 'private');
+    $result = to_array($value); // ['a' => 'public']
+
+Любое другое значение будет приведено к массиву с помощью явного приведения `(array)`. 
 
     $value  = 'value';
     $result = to_array($value); // ['value']
 
-Если передать коллекцию `\Illuminate\Support\Collection` или массив, то вернется массив, при чем все вложенные массивы будут свернуты.
+#### `to_collect`
 
-    $value  = ['it', ['is', 'my'], 'string'];
-    $result = to_array($value); // ['it', 'is', 'my', 'string']
-
-Если передать строку, то она будет разбита с помощью помощника `split`, также как и все вложенные в массив строки будут разбиты.
-
-    $value  = 'it_is_my_string';
-    $result = to_array($value); // ['it', 'is', 'my', 'string']
-
-#### `to_collect` и `Helper::toCollect`
+`dmitryrogolev/Helper::toCollect`
 
 Делает то же самое, что и помощник `to_array`, только оборачивает возвращаемый массив в коллекцию `\Illuminate\Support\Collection`.
 
-## Конфигурация
+#### `to_stringable` 
 
-Из-за возможных конфликтов имен в глобальной области видимости, есть возможность полного отключения регистрации глобальных помощников, а также отключения отдельно взятых функций в файле конфига.
+`dmitryrogolev\Helper::toStringable`
 
-Если вы опубликовали файл конфигурации, то он будет находиться в папке `config` под именем `helper.php` в корне вашего проекта. Откройте его и ознакомьтесь более подробно со всеми параметрами конфигурации.
+Пытается привести переданное значение к строке `Illuminate\Support\Stringable`.
 
-Также вы можете указать конфигурацию в своем файле `.env`.
+    $value  = 'string';
+    $result = to_stringable($value);
+    $result->toString(); // 'string'
 
-    HELPER_OBJ_USE=true
-    HELPER_SPLIT_USE=true
-    HELPER_SPLIT_PATTERN="/(?=\p{Lu})|[,|\s_.-]+/u"
-    HELPER_SPLIT_LIMIT=-1
-    HELPER_TO_ARRAY_USE=true
-    HELPER_TO_COLLECT_USE=true
-    HELPER_USES_FUNCTIONS=true
+У объектов будет сделана попытка вызвать магический метод `__toString`.
+
+    $value  = new MyClass('string');
+    $result = to_stringable($value);
+    $result->toString(); // 'string'
+
+В случае неудачного привидения переданного значения к строке, будет возвращен пустой экземпляр `Illuminate\Support\Stringable`.
+
+    $value  = ['string'];
+    $result = to_stringable($value);
+    $result->toString(); // ''
 
 ## Лицензия 
 
