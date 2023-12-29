@@ -3,8 +3,12 @@
 namespace dmitryrogolev;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 /**
  * Сборник функций-помощников.
@@ -12,16 +16,15 @@ use Illuminate\Support\Stringable;
 class Helper
 {
     /**
-     * Возвращает объект класса, если переданное значение не является экземпляром данного класса. 
-     * 
+     * Возвращает объект класса, если переданное значение не является экземпляром данного класса.
+     *
      * Возвращает null, если $class не является экземпляром или именем класса.
      *
-     * @param mixed $value Входящее значение.
-     * @param string|object $class Имя класса, экземпляр которого нужно получить.
-     * @param mixed ...$params [Не обязательный] Параметры, которые будут переданы конструктору требуемого класса.
-     * @return object|null 
+     * @param  mixed  $value Входящее значение.
+     * @param  string|object  $class Имя класса, экземпляр которого нужно получить.
+     * @param  mixed  ...$params [Не обязательный] Параметры, которые будут переданы конструктору требуемого класса.
      */
-    public static function obj($value, $class, ...$params): object|null
+    public static function obj(mixed $value, string|object $class, mixed ...$params): ?object
     {
         $value = value($value);
 
@@ -45,7 +48,6 @@ class Helper
     /**
      * Приводит переданный объект к массиву.
      *
-     * @param object $obj
      * @return array<int, mixed>
      */
     public static function objectToArray(object $obj): array
@@ -56,7 +58,6 @@ class Helper
     /**
      * Рекурсивно приводит объект и его публичные свойства к массиву.
      *
-     * @param object $obj
      * @return array<int, mixed>
      */
     public static function objectToArrayRecursive(object $obj): array
@@ -69,28 +70,25 @@ class Helper
     /**
      * Разбивает строку на коллекцию по регулярному выражению или по количеству символов.
      *
-     * @param string|\Illuminate\Support\Stringable|\Closure $value Разбиваемая строка.
-     * 
-     * @param string|int $pattern [Не обязательный] 
+     * @param  string|\Illuminate\Support\Stringable|\Closure  $value Разбиваемая строка.
+     * @param  string|int  $pattern [Не обязательный]
      * Регулярное выражение или количество символов, которое должны содержать подстроки.
-     * 
-     * @param int $limit [Не обязательный] Максимальное количество элементов в коллекции. 
+     * @param  int  $limit [Не обязательный] Максимальное количество элементов в коллекции.
      * Значение "-1" указывает на отсутствие ограничения.
-     * 
      * @return \Illuminate\Support\Collection<int, string>
      */
-    public static function split($value, string|int $pattern = '/(?=\p{Lu})|[,|\s_.-]+/u', int $limit = -1): Collection
+    public static function split(mixed $value, string|int $pattern = '/(?=\p{Lu})|[,|\s_.-]+/u', int $limit = -1): Collection
     {
         return static::toStringable($value)->split($pattern, $limit)->filter()->values();
     }
 
     /**
      * Пытается привести входное значение к массиву.
-     * 
-     * @param  mixed $value Входное значение.
+     *
+     * @param  mixed  $value Входное значение.
      * @return array<mixed, mixed>
      */
-    public static function toArray($value): array
+    public static function toArray(mixed $value): array
     {
         $value = value($value);
 
@@ -104,10 +102,10 @@ class Helper
     /**
      * Пытается привести входное значение к коллекции.
      *
-     * @param  mixed $value Входное значение.
+     * @param  mixed  $value Входное значение.
      * @return \Illuminate\Support\Collection<mixed, mixed>
      */
-    public static function toCollect($value): Collection
+    public static function toCollect(mixed $value): Collection
     {
         $value = value($value);
 
@@ -116,11 +114,8 @@ class Helper
 
     /**
      * Пытается привести переданное значение к строке "Illuminate\Support\Stringable".
-     *
-     * @param mixed $value
-     * @return \Illuminate\Support\Stringable
      */
-    public static function toStringable($value): Stringable
+    public static function toStringable(mixed $value): Stringable
     {
         $value = value($value);
 
@@ -130,10 +125,53 @@ class Helper
 
         try {
             $value = (string) $value;
-        } catch (\Error | \ErrorException) {
+        } catch (\Error|\ErrorException) {
             $value = '';
         }
 
         return new Stringable($value);
+    }
+
+    /**
+     * Проверяет, является ли переданное значение идентификатором.
+     */
+    public static function isId(mixed $value): bool
+    {
+        return is_int($value) || is_string($value) && (Str::isUuid($value) || Str::isUlid($value));
+    }
+
+    /**
+     * Возвращает сгенерированную с помощью фабрики модель.
+     */
+    public static function generate(string $class, array|int|bool|null $count = null, array|bool $state = [], bool $create = true): Model|EloquentCollection
+    {
+        if (is_bool($state)) {
+            $create = $state;
+            $state = [];
+        }
+
+        if (is_array($count)) {
+            $state = $count;
+            $count = null;
+        }
+
+        if (is_bool($count)) {
+            $create = $count;
+            $count = null;
+        }
+
+        $factory = $class::factory($count, $state);
+
+        return $create ? $factory->create() : $factory->make();
+    }
+
+    /**
+     * Приводит переданное значение в выравненному массиву.
+     *
+     * @return array<int, mixed>
+     */
+    public static function toFlattenArray(mixed $value): array
+    {
+        return Arr::flatten([$value]);
     }
 }

@@ -22,7 +22,8 @@
         "laravel/framework": "^10.30"
     },
     "require-dev": {
-        "orchestra/testbench": "^8.15"
+        "orchestra/testbench": "^8.15",
+        "laravel/pint": "^1.13"
     },
     "autoload": {
         "psr-4": {
@@ -41,6 +42,7 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "scripts": {
-        "test": "vendor/bin/phpunit"
+        "test": "vendor/bin/phpunit", 
+        "pint": "vendor/bin/pint"
     }
 }
