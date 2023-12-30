@@ -43,6 +43,7 @@
 - [split](#split)
 - [to_array](#to_array)
 - [to_collect](#to_collect)
+- [to_flatten_array](#to_flatten_array)
 - [to_stringable](#to_stringable)
 
 #### `generate` 
