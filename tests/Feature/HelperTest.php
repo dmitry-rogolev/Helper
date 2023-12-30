@@ -2,6 +2,9 @@
 
 namespace dmitryrogolev\Helper\Tests;
 
+use dmitryrogolev\Helper\Tests\Models\User;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 
 /**
@@ -9,6 +12,99 @@ use Illuminate\Support\Stringable;
  */
 class HelperTest extends TestCase
 {
+    use RefreshDatabase;
+
+    /**
+     * Есть ли функция, генерирующая модель с помощью фабрики?
+     */
+    public function test_generate(): void
+    {
+        $model = generate(User::class);
+        $count = 3;
+        $models = generate(User::class, $count);
+        $instance = generate(User::class, false);
+        $instances = generate(User::class, $count, false);
+        $state = [
+            'name' => 'Dmitry',
+            'email' => 'admin@admin.com',
+        ];
+        $withState = generate(User::class, $state);
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||                           Подтверждаем возврат типа.                           ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->assertInstanceOf(User::class, $model);
+        $this->assertInstanceOf(Collection::class, $models);
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||                         Подтверждаем генерацию моделей.                        ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->assertModelExists($model);
+        $this->assertCount($count, $models);
+        $models->each(fn ($item) => $this->assertModelExists($item));
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||                   Подтверждаем создание экземпляров моделей.                   ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->assertModelMissing($instance);
+        $this->assertCount($count, $instances);
+        $instances->each(fn ($item) => $this->assertModelMissing($item));
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||             Подтверждаем создание модели с переданными аттрибутами.            ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $actual = $withState->only(array_keys($state));
+        $this->assertEquals($state, $actual);
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||               Подтверждаем количество выполненных запросов к БД.               ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->resetQueryExecutedCount();
+        generate(User::class);
+        $this->assertQueryExecutedCount(1);
+
+        $this->resetQueryExecutedCount();
+        generate(User::class, $count);
+        $this->assertQueryExecutedCount($count);
+
+        $this->resetQueryExecutedCount();
+        generate(User::class, false);
+        $this->assertQueryExecutedCount(0);
+    }
+
+    /**
+     * Есть ли функция, проверяющее соответствие переданного значения типу идентификатора?
+     */
+    public function test_is_id(): void
+    {
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||                           Подтверждаем возврат типа.                           ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->assertIsBool(is_id(3));
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||         Подтверждаем, что переданное значение является идентификатором.        ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->assertTrue(is_id(rand()));
+        $this->assertTrue(is_id((string) Str::uuid()));
+        $this->assertTrue(is_id((string) Str::ulid()));
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||       Подтверждаем, что переданное значение не является идентификатором.       ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->assertFalse(is_id('3443'));
+        $this->assertFalse(is_id('my-id'));
+        $this->assertFalse(is_id(new MyClass));
+    }
+
     /**
      * Есть ли функция, возвращающий объект требуемого класса?
      */
@@ -211,6 +307,40 @@ class HelperTest extends TestCase
         $value = fn () => ['it', 'is', 'my', 'string'];
         $result = to_collect($value)->toArray();
         $this->assertEquals(['it', 'is', 'my', 'string'], $result);
+    }
+
+    /**
+     * Есть ли функция, приводящая переданное значение к выравненному массиву?
+     */
+    public function test_to_flatten_array(): void
+    {
+        $int = rand();
+        $array = to_flatten_array($int);
+        $matrix = [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ];
+        $flatten = to_flatten_array($matrix);
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||                           Подтверждаем возврат типа.                           ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->assertIsArray($array);
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||                       Подтверждаем привидение к массиву.                       ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->assertCount(1, $array);
+        $this->assertEquals($int, $array[0]);
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||                   Подтверждаем возврат выравненного массива.                   ||
+        // ! ||--------------------------------------------------------------------------------||
+
+        $this->assertCount(9, $flatten);
     }
 
     /**

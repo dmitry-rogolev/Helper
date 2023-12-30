@@ -35,6 +35,8 @@
 
 ### Доступные помощники
 
+- [generate](#generate)
+- [is_id](#is_id)
 - [obj](#obj)
 - [object_to_array](#object_to_array)
 - [object_to_array_recursive](#object_to_array_recursive)
@@ -42,6 +44,50 @@
 - [to_array](#to_array)
 - [to_collect](#to_collect)
 - [to_stringable](#to_stringable)
+
+#### `generate` 
+
+`dmitryrogolev/Helper::generate`
+
+Возвращает сгенерированную с помощью фабрики модель.
+
+    $model = generate(User::class); // Illuminate\Database\Eloquent\Model
+
+Можно сгенерировать несколько моделей, передав их количество.
+
+    $models = generate(User::class, 3); // Illuminate\Database\Eloquent\Collection
+
+Можно сгенерировать модель с переданными аттрибутами.
+
+    $state = [
+        'name' => 'Dmitry', 
+        'email' => 'admin@admin.com', 
+    ];
+    $model = generate(User::class, $state); // Illuminate\Database\Eloquent\Model
+    $model->email; // 'admin@admin.com'
+
+Если требуется только создать экземпляр модели, не сохраняя ее в таблицу, передайте `false`.
+
+    $model = generate(User::class, false); // Illuminate\Database\Eloquent\Model
+    $model->exists; // false
+
+#### `is_id`
+
+`dmitryrogolev/Helper::isId`
+
+Проверяет, соответствует ли переданное значение типу идентификатора.
+
+Для типа `int`, а также для строк в виде `UUID` и `ULID` функция возвращает `true`, для всех остальных значений - `false`.
+
+    is_id(4); // true
+
+    $uuid = (string) Str::uuid();
+    is_id($uuid); // true
+
+    $ulid = (string) Str::ulid();
+    is_id($ulid); // true
+
+    is_id('my-key'); // false
 
 #### `obj` 
 
@@ -144,6 +190,23 @@
 `dmitryrogolev/Helper::toCollect`
 
 Делает то же самое, что и помощник `to_array`, только оборачивает возвращаемый массив в коллекцию `\Illuminate\Support\Collection`.
+
+#### `to_flatten_array`
+
+`dmitryrogolev/Helper::toFlattenArray`
+
+Приводит переданное значение в выравненному массиву. `При этом отбрасываются ключи.`
+
+    $matrix = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+    ];
+    $flatten = to_flatten_array($matrix); // [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
+
+Значения, отличные от массива, оборачиваются.
+
+    $array = to_flatten_array(5); // [ 5 ]
 
 #### `to_stringable` 
 

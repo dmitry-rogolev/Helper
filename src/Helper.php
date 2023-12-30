@@ -3,18 +3,58 @@
 namespace dmitryrogolev;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 /**
  * Сборник функций-помощников.
  */
 class Helper
 {
+    /**
+     * Возвращает сгенерированную с помощью фабрики модель.
+     * 
+     * @param string $class Имя генерируемой модели. 
+     * @param array|int|bool|null $count Количество создаваемых моделей. 
+     * @param array|bool $state Аттрибуты создаваемой модели. 
+     * @param bool $create Сохранить ли запись в таблицу?
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection<int, \Illuminate\Database\Eloquent\Model>|\Illuminate\Database\Eloquent\Model
+     */
+    public static function generate(string $class, array|int|bool|null $count = null, array|bool $state = [], bool $create = true): Model|EloquentCollection
+    {
+        if (is_bool($state)) {
+            $create = $state;
+            $state = [];
+        }
+
+        if (is_array($count)) {
+            $state = $count;
+            $count = null;
+        }
+
+        if (is_bool($count)) {
+            $create = $count;
+            $count = null;
+        }
+
+        $factory = $class::factory($count, $state);
+
+        return $create ? $factory->create() : $factory->make();
+    }
+
+    /**
+     * Проверяет, соответствует ли переданное значение типу идентификатора.
+     */
+    public static function isId(mixed $value): bool
+    {
+        return is_int($value) || is_string($value) && (Str::isUuid($value) || Str::isUlid($value));
+    }
+
     /**
      * Возвращает объект класса, если переданное значение не является экземпляром данного класса.
      *
@@ -113,6 +153,16 @@ class Helper
     }
 
     /**
+     * Приводит переданное значение в выравненному массиву.
+     *
+     * @return array<int, mixed>
+     */
+    public static function toFlattenArray(mixed $value): array
+    {
+        return Arr::flatten([$value]);
+    }
+
+    /**
      * Пытается привести переданное значение к строке "Illuminate\Support\Stringable".
      */
     public static function toStringable(mixed $value): Stringable
@@ -130,48 +180,5 @@ class Helper
         }
 
         return new Stringable($value);
-    }
-
-    /**
-     * Проверяет, является ли переданное значение идентификатором.
-     */
-    public static function isId(mixed $value): bool
-    {
-        return is_int($value) || is_string($value) && (Str::isUuid($value) || Str::isUlid($value));
-    }
-
-    /**
-     * Возвращает сгенерированную с помощью фабрики модель.
-     */
-    public static function generate(string $class, array|int|bool|null $count = null, array|bool $state = [], bool $create = true): Model|EloquentCollection
-    {
-        if (is_bool($state)) {
-            $create = $state;
-            $state = [];
-        }
-
-        if (is_array($count)) {
-            $state = $count;
-            $count = null;
-        }
-
-        if (is_bool($count)) {
-            $create = $count;
-            $count = null;
-        }
-
-        $factory = $class::factory($count, $state);
-
-        return $create ? $factory->create() : $factory->make();
-    }
-
-    /**
-     * Приводит переданное значение в выравненному массиву.
-     *
-     * @return array<int, mixed>
-     */
-    public static function toFlattenArray(mixed $value): array
-    {
-        return Arr::flatten([$value]);
     }
 }

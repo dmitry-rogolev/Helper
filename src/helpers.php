@@ -1,10 +1,37 @@
 <?php
 
 use dmitryrogolev\Helper;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Stringable;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+
+if (! function_exists('generate')) {
+    /**
+     * Возвращает сгенерированную с помощью фабрики модель.
+     * 
+     * @param string $class Имя генерируемой модели. 
+     * @param array|int|bool|null $count Количество создаваемых моделей. 
+     * @param array|bool $state Аттрибуты создаваемой модели. 
+     * @param bool $create Сохранить ли запись в таблицу?
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection<int, \Illuminate\Database\Eloquent\Model>|\Illuminate\Database\Eloquent\Model
+     */
+    function generate(string $class, array|int|bool|null $count = null, array|bool $state = [], bool $create = true): Model|EloquentCollection
+    {
+        return Helper::generate($class, $count, $state, $create);
+    }
+}
+
+if (! function_exists('is_id')) {
+    /**
+     * Проверяет, соответствует ли переданное значение типу идентификатора.
+     */
+    function is_id(mixed $value): bool
+    {
+        return Helper::isId($value);
+    }
+}
 
 if (! function_exists('obj')) {
     /**
@@ -88,36 +115,6 @@ if (! function_exists('to_collect')) {
     }
 }
 
-if (! function_exists('to_stringable')) {
-    /**
-     * Пытается привести переданное значение к строке "Illuminate\Support\Stringable".
-     */
-    function to_stringable(mixed $value): Stringable
-    {
-        return Helper::toStringable($value);
-    }
-}
-
-if (! function_exists('is_id')) {
-    /**
-     * Проверяет, является ли переданное значение идентификатором.
-     */
-    function is_id(mixed $value): bool
-    {
-        return Helper::isId($value);
-    }
-}
-
-if (! function_exists('generate')) {
-    /**
-     * Возвращает сгенерированную с помощью фабрики модель.
-     */
-    function generate(string $class, array|int|bool|null $count = null, array|bool $state = [], bool $create = true): Model|EloquentCollection
-    {
-        return Helper::generate($class, $count, $state, $create);
-    }
-}
-
 if (! function_exists('to_flatten_array')) {
     /**
      * Приводит переданное значение в выравненному массиву.
@@ -127,5 +124,15 @@ if (! function_exists('to_flatten_array')) {
     function to_flatten_array(mixed $value): array
     {
         return Helper::toFlattenArray($value);
+    }
+}
+
+if (! function_exists('to_stringable')) {
+    /**
+     * Пытается привести переданное значение к строке "Illuminate\Support\Stringable".
+     */
+    function to_stringable(mixed $value): Stringable
+    {
+        return Helper::toStringable($value);
     }
 }
