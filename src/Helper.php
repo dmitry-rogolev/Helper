@@ -17,12 +17,11 @@ class Helper
 {
     /**
      * Возвращает сгенерированную с помощью фабрики модель.
-     * 
-     * @param string $class Имя генерируемой модели. 
-     * @param array|int|bool|null $count Количество создаваемых моделей. 
-     * @param array|bool $state Аттрибуты создаваемой модели. 
-     * @param bool $create Сохранить ли запись в таблицу?
-     * 
+     *
+     * @param  string  $class Имя генерируемой модели.
+     * @param  array|int|bool|null  $count Количество создаваемых моделей.
+     * @param  array|bool  $state Аттрибуты создаваемой модели.
+     * @param  bool  $create Сохранить ли запись в таблицу?
      * @return \Illuminate\Database\Eloquent\Collection<int, \Illuminate\Database\Eloquent\Model>|\Illuminate\Database\Eloquent\Model
      */
     public static function generate(string $class, array|int|bool|null $count = null, array|bool $state = [], bool $create = true): Model|EloquentCollection
